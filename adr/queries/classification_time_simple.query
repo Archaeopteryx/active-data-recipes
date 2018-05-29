@@ -1,0 +1,21 @@
+from: treeherder
+select:
+    - repo.index
+    - job.type.name
+    - repo.push.date
+    - failure.notes.failure_classification
+    - failure.notes.created
+    - action.start_time
+    - action.end_time
+orderby: repo.index, job.type.name, action.start_time
+where:
+    and:
+        - eq: {run.state: "completed"}
+        - in: {repo.branch.name: ["autoland", "mozilla-inbound", "mozilla-central", "mozilla-beta"]}
+        - eq: {run.tier: 1}
+        - in: {run.result: ["busted", "exception", "testfailed"]}
+        - neq: {failure.notes.failure_classification: "autoclassified intermittent"}
+        - neq: {failure.classify: "not classified"}
+        - gte: [action.end_time, {date: {$eval: from_date}}]
+        - lte: [action.end_time, {date: {$eval: to_date}}]
+limit: 1000000
